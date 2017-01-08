@@ -1,0 +1,150 @@
+import numpy as np
+import tensorflow as tf
+
+DEFAULT_DROPOUT = 0.8
+DEFAULT_LEARNING_RATE = 0.001
+DEFAULT_EPOCHS = 50
+DEFAULT_BATCH_SIZE = 128
+
+class CNN:
+	def __init__(self, id, input_shape, classes, class_weights=None, dropout=DEFAULT_DROPOUT):
+		self.id = id
+		self.input_shape = input_shape
+		self.classes = classes
+		self.dropout = dropout
+
+		height, width, channels = input_shape
+		input_size = height * width * channels
+
+		self.x = tf.placeholder(tf.float32, [None, input_size])
+		self.y = tf.placeholder(tf.float32, [None, classes])
+		self.keep_prob = tf.placeholder(tf.float32)
+
+		weights = self.weights(input_shape)
+		biases = self.biases()
+
+		if class_weights is None:
+			class_weights = np.ones(classes) / np.sum(np.ones(classes))
+
+		pred, self.layers = self.conv_net(self.x, input_shape, weights, biases, self.keep_prob)
+		self.pred = tf.mul(pred, class_weights)
+
+		self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.pred, self.y))
+		self.optimizer = tf.train.AdamOptimizer(learning_rate=DEFAULT_LEARNING_RATE).minimize(self.cost)
+
+		correct_pred = tf.equal(tf.argmax(self.pred, 1), tf.argmax(self.y, 1))
+		self.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+
+		print('Set up graph')
+
+	def weights(self, input_shape):
+		height, width, channels = input_shape
+		return {
+			'wc1': tf.Variable(tf.random_normal([5, 5, channels, 32])),
+			'wc2': tf.Variable(tf.random_normal([5, 5, 32, 64])),
+			'wc3': tf.Variable(tf.random_normal([5, 5, 64, 128])),
+			'wd1': tf.Variable(tf.random_normal([int(height/4)*int(width/4)*128, 1024])),
+			'out': tf.Variable(tf.random_normal([1024, self.classes]))
+		}
+
+	def biases(self):
+		return {
+			'bc1': tf.Variable(tf.random_normal([32])),
+			'bc2': tf.Variable(tf.random_normal([64])),
+			'bc3': tf.Variable(tf.random_normal([128])),
+			'bd1': tf.Variable(tf.random_normal([1024])),
+			'out': tf.Variable(tf.random_normal([self.classes]))
+		}
+
+	def conv2d(self, x, W, b, strides=1, name=None):
+		x = tf.nn.conv2d(x, W, strides=[1, strides, strides, 1], padding='SAME', name=name)
+		x = tf.nn.bias_add(x, b)
+
+		return tf.nn.relu(x)
+
+	def maxpool2d(self, x, k=2, name=None):
+		return tf.nn.max_pool(x, ksize=[1, k, k, 1], strides=[1, k, k, 1], padding='SAME')
+
+	def conv_net(self, x, input_shape, weights, biases, dropout):
+		height, width, channels = input_shape
+		x = tf.reshape(x, shape=[-1, height, width, channels])
+		layers = []
+
+		# Conv1
+		conv1 = self.conv2d(x, weights['wc1'], biases['bc1'], name='conv1')
+		depth = weights['wc1'].get_shape().as_list()[3]
+		size = str(input_shape[0]) + 'x' + str(input_shape[1]) + 'x' + str(depth)
+		layers.append({'layer': conv1, 'name': 'conv1', 'size': size})
+
+		# Pool1
+		k1 = 2
+		pool1 = self.maxpool2d(conv1, k=k1, name='pool1')
+		size = str(int(input_shape[0]/k1)) + 'x' +  str(int(input_shape[1]/k1)) + 'x' + str(depth)
+		layers.append({'layer': pool1, 'name': 'pool1', 'size': size})
+
+		# Conv2
+		conv2 = self.conv2d(pool1, weights['wc2'], biases['bc2'], name='conv2')
+		depth = weights['wc2'].get_shape().as_list()[3]
+		size = str(int(input_shape[0]/k1)) + 'x' +  str(int(input_shape[1]/k1)) + 'x' + str(depth)
+		layers.append({'layer': conv2, 'name': 'conv2', 'size': size})
+
+		# Pool2
+		k2 = 2
+		pool2 = self.maxpool2d(conv2, k=k2, name='pool2')
+		size = str(int(input_shape[0]/(k1*k2))) + 'x' +  str(int(input_shape[1]/(k1*k2))) + 'x' + str(depth)
+		layers.append({'layer': pool2, 'name': 'pool2', 'size': size})
+
+		# Conv3
+		conv3 = self.conv2d(pool2, weights['wc3'], biases['bc3'], name='conv3')
+		depth = weights['wc3'].get_shape().as_list()[3]
+		size = str(int(input_shape[0]/k1*k2)) + 'x' +  str(int(input_shape[1]/k1*k2)) + 'x' + str(depth)
+		layers.append({'layer': conv2, 'name': 'conv3', 'size': size})
+
+		# Pool 3
+		k3 = 2
+		pool3 = self.maxpool2d(conv3, k=k3, name='pool3')
+		size = str(int(input_shape[0]/(k1*k2*k3))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3))) + 'x' + str(depth)
+		layers.append({'layer': pool2, 'name': 'pool3', 'size': size})
+
+		# Fully connected 1
+		fc1 = tf.reshape(conv3, [-1, weights['wd1'].get_shape().as_list()[0]])
+		fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
+		fc1 = tf.nn.relu(fc1)
+		fc1 = tf.nn.dropout(fc1, dropout, name='dropout')
+		size = str(weights['wd1'].get_shape().as_list()[1])
+		layers.append({'layer': fc1, 'name': 'dropout', 'size': size})
+
+		# Output
+		out = tf.add(tf.matmul(fc1, weights['out']), biases['out'], name='out')
+		size = str(weights['out'].get_shape().as_list()[1])
+		layers.append({'layer': out, 'name': 'out', 'size': size})
+
+		return out, layers
+
+	def fit(self, train_X, train_y, val_X, val_y, epochs=DEFAULT_EPOCHS):
+		init = tf.initialize_all_variables()
+
+		height, width, channels = self.input_shape
+		train_X = np.reshape(train_X, [-1, height * width * channels])
+		val_X = np.reshape(val_X, [-1, height * width * channels])
+
+		batches = []
+		for i in range(0, int(len(train_X) / DEFAULT_BATCH_SIZE) + 1):
+			start = (i * DEFAULT_BATCH_SIZE)
+			end = min((i + 1) * DEFAULT_BATCH_SIZE, len(train_X))
+			x = train_X[start:end]
+			y = train_y[start:end]
+			batches.append({'x': x, 'y': y})
+
+		print('Starting training with ' + str(len(train_X)) + ' images')
+
+		with tf.Session() as sess:
+			sess.run(init)
+			steps = 0
+			for epoch in range(0, epochs):
+				for batch in batches:
+					sess.run(self.optimizer, feed_dict={self.x: batch['x'], self.y: batch['y'], self.keep_prob: self.dropout})
+				loss, acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: val_X, self.y: val_y, self.keep_prob: 1.})
+				print("Epoch " + str(epoch + 1) + ", val loss: " + \
+				"{:.6f}".format(loss) + ", val acc.: " + \
+				"{:.5f}".format(acc))
