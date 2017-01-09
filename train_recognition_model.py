@@ -11,7 +11,7 @@ OUTPUT_MODEL_FOLDER = os.path.join('models', 'recognition')
 DEFAULT_IMAGE_SHAPE = (128, 128, 1)
 
 def train_recognition_model():
-	X, y, labels, ratios = read_datastructure(TRAIN_SRC_FOLDER, DEFAULT_IMAGE_SHAPE, max=1496)
+	X, y, labels, ratios = parse_datastructure(TRAIN_SRC_FOLDER, DEFAULT_IMAGE_SHAPE, max=1496)
 	X, y = shuffle_data(X, y)
 	train_X, train_y, val_X, val_y = split_data(X, y)
 

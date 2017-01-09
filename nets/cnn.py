@@ -154,7 +154,7 @@ class CNN:
 					random.shuffle(batches)
 
 					for batch in batches:
-						sess.run(self.optimizer, feed_dict={self.x: batch['x'], self.y: batch['y'], self.keep_prob: self.dropout})
+						sess.run(self.pred, feed_dict={self.x: batch['x'], self.y: batch['y'], self.keep_prob: self.dropout})
 						loss, acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: batch['x'], self.y: batch['y'], self.keep_prob: 1.})
 						print("Training step " + str(step * DEFAULT_BATCH_SIZE) + ", training loss: " + \
 						"{:.2f}".format(loss) + ", training acc.: " + \
@@ -190,7 +190,7 @@ class CNN:
 
 		return False
 
-	def predict(self, X):
+	def predict(self, X, y):
 		height, width, channels = self.input_shape
 		input_size = height * width * channels
 		X = np.reshape(X, (-1, input_size))
@@ -199,6 +199,8 @@ class CNN:
 			init = tf.initialize_all_variables()
 			with tf.Session() as sess:
 				sess.run(init)
+				loss, acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: X, self.y: y, self.keep_prob: 1.})
+				print('Acc: ' + str(acc))
 				predictions = sess.run(self.pred, feed_dict={self.x: X, self.keep_prob: 1.})
 
 				return predictions
