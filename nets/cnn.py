@@ -30,13 +30,13 @@ class CNN:
 				if class_weights is None:
 					class_weights = np.ones(classes) / np.sum(np.ones(classes))
 
-				pred, self.layers = self.conv_net(self.x, input_shape, weights, biases, self.keep_prob)
-				self.pred = tf.mul(pred, class_weights, name='weighted_pred')
+				self.pred, self.layers = self.conv_net(self.x, input_shape, weights, biases, self.keep_prob)
+				self.weighted_pred = tf.mul(self.pred, class_weights, name='weighted_pred')
 
-				self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.pred, self.y, name='softmax'), name='reduce_mean')
+				self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.weighted_pred, self.y, name='softmax'), name='reduce_mean')
 				self.optimizer = tf.train.AdamOptimizer(learning_rate=DEFAULT_LEARNING_RATE, name='adam').minimize(self.cost)
 
-				correct_pred = tf.equal(tf.argmax(self.pred, 1), tf.argmax(self.y, 1))
+				correct_pred = tf.equal(tf.argmax(self.weighted_pred, 1), tf.argmax(self.y, 1))
 				self.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
 				print('Set up graph')
@@ -61,10 +61,10 @@ class CNN:
 		}
 
 	def conv2d(self, x, W, b, strides=1, name=None):
-		x = tf.nn.conv2d(x, W, strides=[1, strides, strides, 1], padding='SAME', name=name)
-		x = tf.nn.bias_add(x, b)
+		conv = tf.nn.conv2d(x, W, strides=[1, strides, strides, 1], padding='SAME', name=name)
+		conv = tf.nn.bias_add(conv, b)
 
-		return tf.nn.relu(x)
+		return tf.nn.relu(conv)
 
 	def maxpool2d(self, x, k=2, name=None):
 		return tf.nn.max_pool(x, ksize=[1, k, k, 1], strides=[1, k, k, 1], padding='SAME')
@@ -160,7 +160,7 @@ class CNN:
 						"{:.2f}".format(loss) + ", training acc.: " + \
 						"{:.4f}".format(acc))
 						step += 1
-						
+
 					loss, acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: val_X, self.y: val_y, self.keep_prob: 1.})
 					print("Epoch " + str(epoch + 1) + ", val loss: " + \
 					"{:.2f}".format(loss) + ", val acc.: " + \
@@ -173,3 +173,35 @@ class CNN:
 			with tf.Session() as sess:
 				sess.run(init)
 				saver.save(sess, path)
+
+				return True
+
+		return False
+
+	def load(self, path):
+		with self.graph.as_default():
+			saver = tf.train.Saver(tf.all_variables())
+			init = tf.initialize_all_variables()
+			with tf.Session() as sess:
+				sess.run(init)
+				saver.restore(sess, path)
+
+				return True
+
+		return False
+
+	def predict(self, X):
+		height, width, channels = self.input_shape
+		input_size = height * width * channels
+		X = np.reshape(X, (-1, input_size))
+
+		with self.graph.as_default():
+			init = tf.initialize_all_variables()
+			with tf.Session() as sess:
+				sess.run(init)
+				predictions = sess.run(self.pred, feed_dict={self.x: X, self.keep_prob: 1.})
+
+				return predictions
+
+		return []
+
