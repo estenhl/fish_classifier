@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import tensorflow as tf
 
@@ -16,44 +17,47 @@ class CNN:
 		height, width, channels = input_shape
 		input_size = height * width * channels
 
-		self.x = tf.placeholder(tf.float32, [None, input_size])
-		self.y = tf.placeholder(tf.float32, [None, classes])
-		self.keep_prob = tf.placeholder(tf.float32)
+		self.graph = tf.Graph()
+		with self.graph.as_default():
+			with tf.Session() as sess:
+				self.x = tf.placeholder(tf.float32, [None, input_size], name='x_placeholder')
+				self.y = tf.placeholder(tf.float32, [None, classes], name='y_placeholder')
+				self.keep_prob = tf.placeholder(tf.float32, name='dropout_placeholder')
 
-		weights = self.weights(input_shape)
-		biases = self.biases()
+				weights = self.weights(input_shape)
+				biases = self.biases()
 
-		if class_weights is None:
-			class_weights = np.ones(classes) / np.sum(np.ones(classes))
+				if class_weights is None:
+					class_weights = np.ones(classes) / np.sum(np.ones(classes))
 
-		pred, self.layers = self.conv_net(self.x, input_shape, weights, biases, self.keep_prob)
-		self.pred = tf.mul(pred, class_weights)
+				pred, self.layers = self.conv_net(self.x, input_shape, weights, biases, self.keep_prob)
+				self.pred = tf.mul(pred, class_weights, name='weighted_pred')
 
-		self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.pred, self.y))
-		self.optimizer = tf.train.AdamOptimizer(learning_rate=DEFAULT_LEARNING_RATE).minimize(self.cost)
+				self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.pred, self.y, name='softmax'), name='reduce_mean')
+				self.optimizer = tf.train.AdamOptimizer(learning_rate=DEFAULT_LEARNING_RATE, name='adam').minimize(self.cost)
 
-		correct_pred = tf.equal(tf.argmax(self.pred, 1), tf.argmax(self.y, 1))
-		self.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+				correct_pred = tf.equal(tf.argmax(self.pred, 1), tf.argmax(self.y, 1))
+				self.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-		print('Set up graph')
+				print('Set up graph')
 
 	def weights(self, input_shape):
 		height, width, channels = input_shape
 		return {
-			'wc1': tf.Variable(tf.random_normal([5, 5, channels, 32])),
-			'wc2': tf.Variable(tf.random_normal([5, 5, 32, 64])),
-			'wc3': tf.Variable(tf.random_normal([5, 5, 64, 128])),
-			'wd1': tf.Variable(tf.random_normal([int(height/4)*int(width/4)*128, 1024])),
-			'out': tf.Variable(tf.random_normal([1024, self.classes]))
+			'wc1': tf.Variable(tf.random_normal([5, 5, channels, 32]), name='wc1'),
+			'wc2': tf.Variable(tf.random_normal([5, 5, 32, 64]), name='wc2'),
+			'wc3': tf.Variable(tf.random_normal([5, 5, 64, 128]), name='wc3'),
+			'wd1': tf.Variable(tf.random_normal([int(height/4)*int(width/4)*128, 1024]), name='wd1'),
+			'out': tf.Variable(tf.random_normal([1024, self.classes]), name='out_weight')
 		}
 
 	def biases(self):
 		return {
-			'bc1': tf.Variable(tf.random_normal([32])),
-			'bc2': tf.Variable(tf.random_normal([64])),
-			'bc3': tf.Variable(tf.random_normal([128])),
-			'bd1': tf.Variable(tf.random_normal([1024])),
-			'out': tf.Variable(tf.random_normal([self.classes]))
+			'bc1': tf.Variable(tf.random_normal([32]), name='bc1'),
+			'bc2': tf.Variable(tf.random_normal([64]), name='bc2'),
+			'bc3': tf.Variable(tf.random_normal([128]), name='bc3'),
+			'bd1': tf.Variable(tf.random_normal([1024]), name='bd1'),
+			'out': tf.Variable(tf.random_normal([self.classes]), name='out_bias')
 		}
 
 	def conv2d(self, x, W, b, strides=1, name=None):
@@ -121,30 +125,51 @@ class CNN:
 
 		return out, layers
 
-	def fit(self, train_X, train_y, val_X, val_y, epochs=DEFAULT_EPOCHS):
-		init = tf.initialize_all_variables()
+	def split_data(self, X, y):
+		batches = []
 
+		for i in range(0, int(len(X) / DEFAULT_BATCH_SIZE) + 1):
+			start = (i * DEFAULT_BATCH_SIZE)
+			end = min((i + 1) * DEFAULT_BATCH_SIZE, len(X))
+			batch_X = X[start:end]
+			batch_y = y[start:end]
+			batches.append({'x': batch_X, 'y': batch_y})
+
+		return batches
+
+	def fit(self, train_X, train_y, val_X, val_y, epochs=DEFAULT_EPOCHS):
 		height, width, channels = self.input_shape
 		train_X = np.reshape(train_X, [-1, height * width * channels])
 		val_X = np.reshape(val_X, [-1, height * width * channels])
 
-		batches = []
-		for i in range(0, int(len(train_X) / DEFAULT_BATCH_SIZE) + 1):
-			start = (i * DEFAULT_BATCH_SIZE)
-			end = min((i + 1) * DEFAULT_BATCH_SIZE, len(train_X))
-			x = train_X[start:end]
-			y = train_y[start:end]
-			batches.append({'x': x, 'y': y})
+		batches = self.split_data(train_X, train_y)
 
 		print('Starting training with ' + str(len(train_X)) + ' images')
+		with self.graph.as_default():
+			init = tf.initialize_all_variables()
+			with tf.Session() as sess:
+				sess.run(init)
+				step = 1
+				for epoch in range(0, epochs):
+					random.shuffle(batches)
 
-		with tf.Session() as sess:
-			sess.run(init)
-			steps = 0
-			for epoch in range(0, epochs):
-				for batch in batches:
-					sess.run(self.optimizer, feed_dict={self.x: batch['x'], self.y: batch['y'], self.keep_prob: self.dropout})
-				loss, acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: val_X, self.y: val_y, self.keep_prob: 1.})
-				print("Epoch " + str(epoch + 1) + ", val loss: " + \
-				"{:.6f}".format(loss) + ", val acc.: " + \
-				"{:.5f}".format(acc))
+					for batch in batches:
+						sess.run(self.optimizer, feed_dict={self.x: batch['x'], self.y: batch['y'], self.keep_prob: self.dropout})
+						loss, acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: batch['x'], self.y: batch['y'], self.keep_prob: 1.})
+						print("Training step " + str(step * DEFAULT_BATCH_SIZE) + ", training loss: " + \
+						"{:.2f}".format(loss) + ", training acc.: " + \
+						"{:.4f}".format(acc))
+						step += 1
+						
+					loss, acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: val_X, self.y: val_y, self.keep_prob: 1.})
+					print("Epoch " + str(epoch + 1) + ", val loss: " + \
+					"{:.2f}".format(loss) + ", val acc.: " + \
+					"{:.4f}".format(acc))
+
+	def save(self, path):
+		with self.graph.as_default():
+			saver = tf.train.Saver(tf.all_variables())
+			init = tf.initialize_all_variables()
+			with tf.Session() as sess:
+				sess.run(init)
+				saver.save(sess, path)
