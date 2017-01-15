@@ -5,10 +5,11 @@ from nets.cnn import CNN
 from utils.data import split_data
 from utils.data import shuffle_data
 from utils.data import parse_datastructure
+from test_recognition_model import test_recognition_model
 
 TRAIN_SRC_FOLDER = os.path.join('data', 'recognition', 'train')
 OUTPUT_MODEL_FOLDER = os.path.join('models', 'recognition')
-DEFAULT_IMAGE_SHAPE = (128, 128, 1)
+DEFAULT_IMAGE_SHAPE = (288, 288, 1)
 
 def train_recognition_model():
 	X, y, labels, ratios = parse_datastructure(TRAIN_SRC_FOLDER, DEFAULT_IMAGE_SHAPE, max=1496)
@@ -17,7 +18,9 @@ def train_recognition_model():
 
 	height, width, channels = DEFAULT_IMAGE_SHAPE
 	cnn = CNN('Fishes', (height, width, channels), 2, class_weights=(1 - ratios))
-	cnn.fit(train_X, train_y, val_X, val_y, epochs=25)
+	cnn.fit(train_X, train_y, val_X, val_y, epochs=10)
+
+	test_recognition_model(cnn=cnn)
 
 	if not os.path.isdir(OUTPUT_MODEL_FOLDER):
 		os.mkdir(OUTPUT_MODEL_FOLDER)

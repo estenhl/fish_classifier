@@ -9,13 +9,16 @@ DEST_FOLDER = os.path.join('data', 'recognition')
 LABELS = {'positive': ['ALB', 'BET', 'DOL', 'LAG', 'OTHER', 'SHARK', 'YFT'], 'negative': ['NoF']}
 TRAIN_SPLIT = 0.8
 
-def generate_data(src_folder, labels):
+def fetch_data(src_folder, labels):
 	data = []
 	for label in LABELS:
 		for folder in LABELS[label]:
 			i = 0
 			src = os.path.join(SRC_FOLDER, folder)
 			for filename in os.listdir(src):
+				if filename == '.DS_Store':
+					continue
+					
 				data.append((src, filename, label))
 
 	return data
@@ -43,7 +46,7 @@ def copy_files(dest, files, target, duplicate=False):
 			cv2.imwrite(os.path.join(dest, prefix + '_hvflip.' + postfix), np.flipud(np.fliplr(img)))
 
 if __name__ == '__main__':
-	data = generate_data(SRC_FOLDER, LABELS)
+	data = fetch_data(SRC_FOLDER, LABELS)
 	random.shuffle(data)
 	train_len = int(TRAIN_SPLIT * len(data))
 	train = data[:train_len]
