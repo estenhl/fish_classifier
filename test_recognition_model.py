@@ -8,7 +8,7 @@ MODEL_PATH = os.path.join('models', 'recognition', 'model.ckpt')
 DEFAULT_IMAGE_SHAPE = (288, 288, 1)
 
 def test_recognition_model(cnn=None):
-	X, y, labels, _ = parse_datastructure(TEST_SRC_FOLDER, DEFAULT_IMAGE_SHAPE)
+	X, y, labels, _ = parse_datastructure(TEST_SRC_FOLDER, DEFAULT_IMAGE_SHAPE, max=10)
 
 	height, width, channels = DEFAULT_IMAGE_SHAPE
 	if cnn is None:

@@ -18,7 +18,7 @@ def train_recognition_model():
 
 	height, width, channels = DEFAULT_IMAGE_SHAPE
 	cnn = CNN('Fishes', (height, width, channels), 2, class_weights=(1 - ratios))
-	cnn.fit(train_X, train_y, val_X, val_y, epochs=50)
+	cnn.fit(train_X, train_y, val_X, val_y, epochs=5)
 
 	test_recognition_model(cnn=cnn)
 

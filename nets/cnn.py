@@ -225,8 +225,9 @@ class CNN:
 		return False
 
 	def load(self, path):
+		graph_path = path + '.meta'
 		with self.graph.as_default():
-			saver = tf.train.Saver(tf.all_variables())
+			saver = tf.train.import_meta_graph(graph_path)
 			init = tf.initialize_all_variables()
 			with tf.Session() as sess:
 				sess.run(init)
