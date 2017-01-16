@@ -179,7 +179,7 @@ class CNN:
 		val_X = np.reshape(val_X, [-1, height * width * channels])
 
 		batches = self.split_data(train_X, train_y)
-		val_batches = self.split(val_X, val_y)
+		val_batches = self.split_data(val_X, val_y)
 
 		print('Starting training with ' + str(len(train_X)) + ' images')
 		with self.graph.as_default():
