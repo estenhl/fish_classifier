@@ -179,6 +179,7 @@ class CNN:
 		val_X = np.reshape(val_X, [-1, height * width * channels])
 
 		batches = self.split_data(train_X, train_y)
+		val_batches = self.split(val_X, val_y)
 
 		print('Starting training with ' + str(len(train_X)) + ' images')
 		with self.graph.as_default():
@@ -189,15 +190,24 @@ class CNN:
 				for epoch in range(0, epochs):
 					random.shuffle(batches)
 
-					for batch in batches:
+					for i, batch in enumerate(batches):
 						sess.run(self.optimizer, feed_dict={self.x: batch['x'], self.y: batch['y']})
 						loss, acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: batch['x'], self.y: batch['y']})
-						print("Training step " + str(step * DEFAULT_BATCH_SIZE) + ", training loss: " + \
-						"{:.2f}".format(loss) + ", training acc.: " + \
-						"{:.4f}".format(acc))
+						
+						if i == len(batches) - 1:
+							print("Training step " + str(step * DEFAULT_BATCH_SIZE) + ", training loss: " + \
+							"{:.2f}".format(loss) + ", training acc.: " + \
+							"{:.4f}".format(acc))
 						step += 1
 
-					loss, acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: val_X, self.y: val_y})
+					loss = 0.0
+					acc = 0.0
+					for val_batch in val_batches:
+						batch_loss, batch_acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: val_batch['x'], self.y: val_batch['y']})
+						loss += batch_loss * len(val_batch['x'])
+						acc += batch_acc * len(val_batch['x'])
+					loss /= len(val_X)
+					acc /= len(val_X)
 					print("Epoch " + str(epoch + 1) + ", val loss: " + \
 					"{:.2f}".format(loss) + ", val acc.: " + \
 					"{:.4f}".format(acc))
