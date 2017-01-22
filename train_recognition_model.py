@@ -18,14 +18,14 @@ def train_recognition_model():
 
 	height, width, channels = DEFAULT_IMAGE_SHAPE
 	cnn = CNN('Fishes', (height, width, channels), 2, class_weights=(1 - ratios))
-	cnn.fit(train_X, train_y, val_X, val_y, epochs=5)
+	cnn.fit(train_X, train_y, val_X, val_y, epochs=50)
 
 	test_recognition_model(cnn=cnn)
 
 	if not os.path.isdir(OUTPUT_MODEL_FOLDER):
 		os.mkdir(OUTPUT_MODEL_FOLDER)
 
-	cnn.save(os.path.join(OUTPUT_MODEL_FOLDER, 'model.ckpt'))
+	#cnn.save(os.path.join(OUTPUT_MODEL_FOLDER, 'model.ckpt'))
 
 if __name__ == '__main__':
 	train_recognition_model()

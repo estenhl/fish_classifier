@@ -25,6 +25,10 @@ def fetch_data(src_folder, labels):
 
 def copy_files(dest, files, target, duplicate=False):
 	target_dest = os.path.join(dest, target)
+
+	if not os.path.isdir(dest):
+		os.mkdir(dest)
+
 	if not os.path.isdir(target_dest):
 		os.mkdir(target_dest)
 

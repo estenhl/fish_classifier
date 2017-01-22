@@ -161,15 +161,18 @@ class CNN:
 
 		return out, layers
 
-	def split_data(self, X, y):
+	def split_data(self, X, y=None):
 		batches = []
 
 		for i in range(0, int(len(X) / DEFAULT_BATCH_SIZE) + 1):
 			start = (i * DEFAULT_BATCH_SIZE)
 			end = min((i + 1) * DEFAULT_BATCH_SIZE, len(X))
 			batch_X = X[start:end]
-			batch_y = y[start:end]
-			batches.append({'x': batch_X, 'y': batch_y})
+			if y is None:
+				batches.append({'x': batch_X})
+			else:
+				batch_y = y[start:end]
+				batches.append({'x': batch_X, 'y': batch_y})
 
 		return batches
 
@@ -241,12 +244,19 @@ class CNN:
 		height, width, channels = self.input_shape
 		input_size = height * width * channels
 		X = np.reshape(X, (-1, input_size))
+		batches = self.split_data(X)
+		predictions = None
 
 		with self.graph.as_default():
 			init = tf.initialize_all_variables()
 			with tf.Session() as sess:
 				sess.run(init)
-				predictions = sess.run(self.pred, feed_dict={self.x: X})
+				for batch in batches:
+					batch_preds = sess.run(self.pred, feed_dict={self.x: batch['x']})
+					if predictions is None:
+						predictions = batch_preds
+					else:
+						predictions = np.concatenate((predictions, batch_preds))
 
 				return predictions
 

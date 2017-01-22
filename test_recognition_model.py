@@ -8,13 +8,14 @@ MODEL_PATH = os.path.join('models', 'recognition', 'model.ckpt')
 DEFAULT_IMAGE_SHAPE = (288, 288, 1)
 
 def test_recognition_model(cnn=None):
-	X, y, labels, _ = parse_datastructure(TEST_SRC_FOLDER, DEFAULT_IMAGE_SHAPE, max=10)
+	X, y, labels, _ = parse_datastructure(TEST_SRC_FOLDER, DEFAULT_IMAGE_SHAPE)
 
 	height, width, channels = DEFAULT_IMAGE_SHAPE
 	if cnn is None:
 		cnn = CNN('Fishes', (height, width, channels), 2)
 		cnn.load(MODEL_PATH)
 	predictions = cnn.predict(X, y)
+	print(predictions)
 
 	accuracy, conf_matrix = validate_prediction(y, predictions, labels)
 	print('Accuracy: ' + str(accuracy))
