@@ -11,32 +11,31 @@ class CNN:
 		self.id = id
 		self.input_shape = input_shape
 		self.classes = classes
+		self.variables = {}
 
 		height, width, channels = input_shape
 		input_size = height * width * channels
 
 		self.graph = tf.Graph()
-		with self.graph.as_default():
-			with tf.Session() as sess:
-				self.x = tf.placeholder(tf.float32, [None, input_size], name='x_placeholder')
-				self.y = tf.placeholder(tf.float32, [None, classes], name='y_placeholder')
+		with tf.Session(graph=self.graph) as sess:
+			self.x = tf.placeholder(tf.float32, [None, input_size], name='x_placeholder')
+			self.y = tf.placeholder(tf.float32, [None, classes], name='y_placeholder')
 
-				weights = self.weights(input_shape)
-				biases = self.biases()
+			weights = self.weights(input_shape)
+			biases = self.biases()
 
-				if class_weights is None:
-					class_weights = np.ones(classes) / np.sum(np.ones(classes))
+			if class_weights is None:
+				class_weights = np.ones(classes) / np.sum(np.ones(classes))
 
-				self.pred, self.layers = self.conv_net(self.x, input_shape, weights, biases)
-				self.weighted_pred = tf.mul(self.pred, class_weights, name='weighted_pred')
+			self.pred, self.layers = self.conv_net(self.x, input_shape, weights, biases)
+			self.weighted_pred = tf.mul(self.pred, class_weights, name='weighted_pred')
 
-				self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.weighted_pred, self.y, name='softmax'), name='reduce_mean')
-				self.optimizer = tf.train.AdamOptimizer(learning_rate=DEFAULT_LEARNING_RATE, name='adam').minimize(self.cost)
+			self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.weighted_pred, self.y, name='softmax'), name='reduce_mean')
+			self.optimizer = tf.train.AdamOptimizer(learning_rate=DEFAULT_LEARNING_RATE, name='adam').minimize(self.cost)
 
-				correct_pred = tf.equal(tf.argmax(self.weighted_pred, 1), tf.argmax(self.y, 1))
-				self.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+			correct_pred = tf.equal(tf.argmax(self.weighted_pred, 1), tf.argmax(self.y, 1))
+			self.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-				print('Set up graph')
 
 	def weights(self, input_shape):
 		height, width, channels = input_shape
@@ -58,8 +57,8 @@ class CNN:
 			'bc2': tf.Variable(tf.random_normal([64]), name='bc2'),
 			'bc3': tf.Variable(tf.random_normal([64]), name='bc3'),
 			'bc4': tf.Variable(tf.random_normal([128]), name='bc4'),
-			'bc5': tf.Variable(tf.random_normal([128]), name='bc4'),
-			'bc6': tf.Variable(tf.random_normal([256]), name='bc4'),
+			'bc5': tf.Variable(tf.random_normal([128]), name='bc5'),
+			'bc6': tf.Variable(tf.random_normal([256]), name='bc6'),
 			'bd1': tf.Variable(tf.random_normal([1024]), name='bd1'),
 			'bd2': tf.Variable(tf.random_normal([512]), name='bd2'),
 			'out': tf.Variable(tf.random_normal([self.classes]), name='out_bias')
@@ -150,7 +149,7 @@ class CNN:
 		fc2 = tf.reshape(fc1, [-1, weights['wd2'].get_shape().as_list()[0]])
 		fc2 = tf.add(tf.matmul(fc2, weights['wd2']), biases['bd2'])
 		fc2 = tf.nn.relu(fc2)
-		fc2 = tf.nn.dropout(fc2, 0.8, name='dropout')
+		fc2 = tf.nn.dropout(fc2, 1, name='dropout')
 		size = str(weights['wd2'].get_shape().as_list()[1])
 		layers.append({'layer': fc1, 'name': 'fc2', 'size': size})
 
@@ -176,6 +175,50 @@ class CNN:
 
 		return batches
 
+	def checkpoint_variables(self, sess):
+		print(str([n.name for n in tf.global_variables()]))
+		for var in tf.global_variables():
+			print('Initializing ' + var.name)
+			self.variables[var] = sess.run(var)
+
+	def initialize_session(self):
+		sess = tf.Session(graph=self.graph)
+
+		if len(self.variables) > 0:
+			for var in self.variables:
+				sess.run(var.assign(self.variables[var]))
+
+		return sess
+
+	def train_epoch(self, sess, batches, steps=1):
+		for i, batch in enumerate(batches):
+			sess.run(self.optimizer, feed_dict={self.x: batch['x'], self.y: batch['y']})
+					
+			if i == len(batches) - 1:
+				loss, acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: batch['x'], self.y: batch['y']})
+					
+				print("Training step " + str(steps * DEFAULT_BATCH_SIZE) + ", training loss: " + \
+					"{:.2f}".format(loss) + ", training acc.: {:.4f}".format(acc))
+			steps += 1
+
+		return steps
+
+	def validate_epoch(self, sess, val_batches, total_len):
+		loss = 0.0
+		acc = 0.0
+
+		for val_batch in val_batches:
+			batch_loss, batch_acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: val_batch['x'], self.y: val_batch['y']})
+			loss += batch_loss * len(val_batch['x'])
+			acc += batch_acc * len(val_batch['x'])
+
+			v = val_batch
+
+		loss /= total_len
+		acc /= total_len
+		
+		return loss, acc
+
 	def fit(self, train_X, train_y, val_X, val_y, epochs=DEFAULT_EPOCHS):
 		height, width, channels = self.input_shape
 		train_X = np.reshape(train_X, [-1, height * width * channels])
@@ -184,81 +227,55 @@ class CNN:
 		batches = self.split_data(train_X, train_y)
 		val_batches = self.split_data(val_X, val_y)
 
-		print('Starting training with ' + str(len(train_X)) + ' images')
-		with self.graph.as_default():
-			init = tf.initialize_all_variables()
-			with tf.Session() as sess:
-				sess.run(init)
-				step = 1
-				for epoch in range(0, epochs):
-					random.shuffle(batches)
+		print('Started training with ' + str(len(train_X)) + ' images')
+		with self.initialize_session() as sess:
+			sess.run(tf.global_variables_initializer())
+			steps = 1
+			for epoch in range(0, epochs):
+				random.shuffle(batches)
 
-					for i, batch in enumerate(batches):
-						sess.run(self.optimizer, feed_dict={self.x: batch['x'], self.y: batch['y']})
-						loss, acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: batch['x'], self.y: batch['y']})
-						
-						if i == len(batches) - 1:
-							print("Training step " + str(step * DEFAULT_BATCH_SIZE) + ", training loss: " + \
-							"{:.2f}".format(loss) + ", training acc.: " + \
-							"{:.4f}".format(acc))
-						step += 1
-
-					loss = 0.0
-					acc = 0.0
-					for val_batch in val_batches:
-						batch_loss, batch_acc = sess.run([self.cost, self.accuracy], feed_dict={self.x: val_batch['x'], self.y: val_batch['y']})
-						loss += batch_loss * len(val_batch['x'])
-						acc += batch_acc * len(val_batch['x'])
-					loss /= len(val_X)
-					acc /= len(val_X)
-					print("Epoch " + str(epoch + 1) + ", val loss: " + \
+				steps = self.train_epoch(sess, batches, steps=steps)
+				loss, acc = self.validate_epoch(sess, val_batches, len(val_X))
+				print("Epoch " + str(epoch + 1) + ", val loss: " + \
 					"{:.2f}".format(loss) + ", val acc.: " + \
 					"{:.4f}".format(acc))
 
-	def save(self, path):
-		with self.graph.as_default():
-			saver = tf.train.Saver(tf.all_variables())
-			init = tf.initialize_all_variables()
-			with tf.Session() as sess:
-				sess.run(init)
-				saver.save(sess, path)
+			self.checkpoint_variables(sess)
+			
 
-				return True
+	def save(self, path):
+		with self.initialize_session() as sess:
+			saver = tf.train.Saver(tf.global_variables())
+			saver.save(sess, path)
+
+			return True
 
 		return False
 
 	def load(self, path):
 		graph_path = path + '.meta'
-		with self.graph.as_default():
+		with tf.Session(graph=self.graph) as sess:
 			saver = tf.train.import_meta_graph(graph_path)
-			init = tf.initialize_all_variables()
-			with tf.Session() as sess:
-				sess.run(init)
-				saver.restore(sess, path)
+			saver.restore(sess, path)
+			print(str([n.name for n in tf.global_variables()]))
+			self.checkpoint_variables(sess)
 
-				return True
-
-		return False
-
-	def predict(self, X, y):
+	def predict(self, X):
 		height, width, channels = self.input_shape
 		input_size = height * width * channels
 		X = np.reshape(X, (-1, input_size))
 		batches = self.split_data(X)
-		predictions = None
+		predictions = []
 
-		with self.graph.as_default():
-			init = tf.initialize_all_variables()
-			with tf.Session() as sess:
-				sess.run(init)
-				for batch in batches:
-					batch_preds = sess.run(self.pred, feed_dict={self.x: batch['x']})
-					if predictions is None:
-						predictions = batch_preds
-					else:
-						predictions = np.concatenate((predictions, batch_preds))
+		with self.initialize_session() as sess:
+			for batch in batches:
+				batch_preds = sess.run(self.pred, feed_dict={self.x: batch['x']})
+				if len(predictions) == 0:
+					predictions = batch_preds
+				else:
+					predictions = np.concatenate((predictions, batch_preds))
+		
+		return predictions
 
-				return predictions
 
-		return []
 
