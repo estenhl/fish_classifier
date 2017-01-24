@@ -255,9 +255,10 @@ class CNN:
 	def load(self, path):
 		graph_path = path + '.meta'
 		with tf.Session(graph=self.graph) as sess:
+			sess.run(tf.global_variables_initializer())
 			saver = tf.train.import_meta_graph(graph_path)
 			saver.restore(sess, path)
-			print(str([n.name for n in tf.global_variables()]))
+
 			self.checkpoint_variables(sess)
 
 	def predict(self, X):
