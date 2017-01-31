@@ -14,8 +14,9 @@ def train_localization_model(recognition_cnn=None, verbose=False):
 		recognition_cnn = train_recognition_model(verbose=verbose)
 
 	X, _, _, _ = parse_datastructure(SRC_FOLDER, DEFAULT_IMAGE_SHAPE, verbose=verbose)
-	features = recognition_cnn.extract_features()
+	features = recognition_cnn.extract_features(X, layer_name)
+	print(features.shape)
 
 if __name__ == '__main__':
 	train_recognition_model(verbose=True)
-
+	

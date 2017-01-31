@@ -15,20 +15,20 @@ def train_recognition_model(verbose=False):
 	if verbose:
 		print('Training recognition model')
 
-	X, y, labels, ratios = parse_datastructure(SRC_FOLDER, DEFAULT_IMAGE_SHAPE, verbose=verbose)
+	X, y, labels, ratios = parse_datastructure(SRC_FOLDER, DEFAULT_IMAGE_SHAPE, max=50, verbose=verbose)
 	X, y = shuffle_data(X, y)
 	train_X, train_y, val_X, val_y = split_data(X, y)
 
 	height, width, channels = DEFAULT_IMAGE_SHAPE
 	cnn = DeepCNN('Fishes', (height, width, channels), 2, class_weights=(1 - ratios))
-	cnn.fit(train_X, train_y, val_X, val_y, epochs=50)
+	cnn.fit(train_X, train_y, val_X, val_y, epochs=1)
 
 	if not os.path.isdir(OUTPUT_MODEL_FOLDER):
 		os.mkdir(OUTPUT_MODEL_FOLDER)
 
 	cnn.save(OUTPUT_MODEL_FOLDER)
 
-	test_recognition_model(cnn, verbose=verbose)
+	#test_recognition_model(cnn, verbose=verbose)
 
 if __name__ == '__main__':
 	train_recognition_model()
