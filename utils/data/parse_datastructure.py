@@ -9,7 +9,7 @@ def onehot(arr):
 
 	return onehot
 
-def parse_datastructure(folder, image_shape, max=None):
+def parse_datastructure(folder, image_shape, max=None, verbose=False):
 	print('Reading data from ' + folder)
 
 	X = []
@@ -40,7 +40,8 @@ def parse_datastructure(folder, image_shape, max=None):
 			i += 1
 			if max is not None and i == max:
 				break
-		print('Read ' + str(i) + ' images from ' + src)
+		if verbose:
+			print('Read ' + str(i) + ' images from ' + src)
 
 	X = np.asarray(X)
 	y = np.array(y)
@@ -48,5 +49,7 @@ def parse_datastructure(folder, image_shape, max=None):
 	counts = np.asarray(counts)
 	ratios = counts / np.sum(counts)
 
-	print('Read ' + str(len(X)) + ' images')
+	if verbose:
+		print('Read ' + str(len(X)) + ' total images')
+		
 	return X, y, labels, ratios

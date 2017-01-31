@@ -1,18 +1,21 @@
 import os
-from nets.cnn import CNN
+from nets.deep_cnn import DeepCNN
 from utils.data import parse_datastructure
 from utils.eval import validate_prediction
 
-TEST_SRC_FOLDER = os.path.join('data', 'recognition', 'test')
-MODEL_PATH = os.path.join('models', 'recognition', 'model.ckpt')
-DEFAULT_IMAGE_SHAPE = (24, 24, 1)
+SRC_FOLDER = os.path.join('data', 'recognition', 'test')
+MODEL_PATH = os.path.join('models', 'recognition')
+DEFAULT_IMAGE_SHAPE = (288, 288, 1)
 
-def test_recognition_model(cnn=None):
-	X, y, labels, _ = parse_datastructure(TEST_SRC_FOLDER, DEFAULT_IMAGE_SHAPE, max=1)
+def test_recognition_model(cnn=None, verbose=False):
+	if verbose:
+		print('Testing recognition model')
+
+	X, y, labels, _ = parse_datastructure(SRC_FOLDER, DEFAULT_IMAGE_SHAPE, verbose=verbose)
 
 	height, width, channels = DEFAULT_IMAGE_SHAPE
 	if cnn is None:
-		cnn = CNN('Fishes', (height, width, channels), 2)
+		cnn = DeepCNN('Fishes', (height, width, channels), 2)
 		cnn.load(MODEL_PATH)
 	predictions = cnn.predict(X)
 

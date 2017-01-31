@@ -1,3 +1,4 @@
+import os
 import random
 import numpy as np
 import tensorflow as tf
@@ -6,7 +7,7 @@ DEFAULT_LEARNING_RATE = 0.001
 DEFAULT_EPOCHS = 50
 DEFAULT_BATCH_SIZE = 128
 
-class CNN:
+class DeepCNN:
 	def __init__(self, id, input_shape, classes, class_weights=None):
 		self.id = id
 		self.input_shape = input_shape
@@ -46,7 +47,9 @@ class CNN:
 			'wc4': tf.Variable(tf.random_normal([5, 5, 64, 128]), name='wc4'),
 			'wc5': tf.Variable(tf.random_normal([5, 5, 128, 128]), name='wc5'),
 			'wc6': tf.Variable(tf.random_normal([5, 5, 128, 256]), name='wc6'),
-			'wd1': tf.Variable(tf.random_normal([256, 1024]), name='wd1'),
+			'wc7': tf.Variable(tf.random_normal([3, 3, 256, 256]), name='wc7'),
+			'wc8': tf.Variable(tf.random_normal([3, 3, 256, 512]), name='wc8'),
+			'wd1': tf.Variable(tf.random_normal([512, 1024]), name='wd1'),
 			'wd2': tf.Variable(tf.random_normal([1024, 512]), name='wd2'),
 			'out': tf.Variable(tf.random_normal([512, self.classes]), name='out_weight')
 		}
@@ -59,6 +62,8 @@ class CNN:
 			'bc4': tf.Variable(tf.random_normal([128]), name='bc4'),
 			'bc5': tf.Variable(tf.random_normal([128]), name='bc5'),
 			'bc6': tf.Variable(tf.random_normal([256]), name='bc6'),
+			'bc7': tf.Variable(tf.random_normal([256]), name='bc7'),
+			'bc8': tf.Variable(tf.random_normal([512]), name='bc8'),
 			'bd1': tf.Variable(tf.random_normal([1024]), name='bd1'),
 			'bd2': tf.Variable(tf.random_normal([512]), name='bd2'),
 			'out': tf.Variable(tf.random_normal([self.classes]), name='out_bias')
@@ -82,68 +87,86 @@ class CNN:
 		conv1 = self.conv2d(x, weights['wc1'], biases['bc1'], name='conv1')
 		depth = weights['wc1'].get_shape().as_list()[3]
 		size = str(input_shape[0]) + 'x' + str(input_shape[1]) + 'x' + str(depth)
-		layers.append({'layer': conv1, 'name': 'conv1', 'size': size})
+		layers.append({'name': 'conv1', 'size': size})
 
 		# Pool1
 		k1 = 2
 		pool1 = self.maxpool2d(conv1, k=k1, name='pool1')
 		size = str(int(input_shape[0]/k1)) + 'x' +  str(int(input_shape[1]/k1)) + 'x' + str(depth)
-		layers.append({'layer': pool1, 'name': 'pool1', 'size': size})
+		layers.append({'name': 'pool1', 'size': size})
 
 		# Conv2
 		conv2 = self.conv2d(pool1, weights['wc2'], biases['bc2'], name='conv2')
 		depth = weights['wc2'].get_shape().as_list()[3]
 		size = str(int(input_shape[0]/k1)) + 'x' +  str(int(input_shape[1]/k1)) + 'x' + str(depth)
-		layers.append({'layer': conv2, 'name': 'conv2', 'size': size})
+		layers.append({'name': 'conv2', 'size': size})
 
 		# Pool2
 		k2 = 2
 		pool2 = self.maxpool2d(conv2, k=k2, name='pool2')
 		size = str(int(input_shape[0]/(k1*k2))) + 'x' +  str(int(input_shape[1]/(k1*k2))) + 'x' + str(depth)
-		layers.append({'layer': pool2, 'name': 'pool2', 'size': size})
+		layers.append({'name': 'pool2', 'size': size})
 
 		# Conv3
 		conv3 = self.conv2d(pool2, weights['wc3'], biases['bc3'], name='conv3')
 		depth = weights['wc3'].get_shape().as_list()[3]
 		size = str(int(input_shape[0]/k1*k2)) + 'x' +  str(int(input_shape[1]/k1*k2)) + 'x' + str(depth)
-		layers.append({'layer': conv3, 'name': 'conv3', 'size': size})
+		layers.append({'name': 'conv3', 'size': size})
 
 		# Conv4
 		conv4 = self.conv2d(pool2, weights['wc4'], biases['bc4'], name='conv4')
 		depth = weights['wc4'].get_shape().as_list()[3]
 		size = str(int(input_shape[0]/k1*k2)) + 'x' +  str(int(input_shape[1]/k1*k2)) + 'x' + str(depth)
-		layers.append({'layer': conv3, 'name': 'conv4', 'size': size})
+		layers.append({'name': 'conv4', 'size': size})
 
 		# Pool3
 		k3 = 2
 		pool3 = self.maxpool2d(conv4, k=k3, name='pool3')
 		size = str(int(input_shape[0]/(k1*k2*k3))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3))) + 'x' + str(depth)
-		layers.append({'layer': pool3, 'name': 'pool3', 'size': size})
+		layers.append({'name': 'pool3', 'size': size})
 
 		# Conv5
 		conv5 = self.conv2d(pool3, weights['wc5'], biases['bc4'], name='conv5')
 		depth = weights['wc5'].get_shape().as_list()[3]
 		size = str(int(input_shape[0]/(k1*k2*k3))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3))) + 'x' + str(depth)
-		layers.append({'layer': conv4, 'name': 'conv5', 'size': size})
+		layers.append({'name': 'conv5', 'size': size})
 
 		# Conv6
-		conv4 = self.conv2d(conv5, weights['wc6'], biases['bc6'], name='conv6')
+		conv6 = self.conv2d(conv5, weights['wc6'], biases['bc6'], name='conv6')
 		depth = weights['wc6'].get_shape().as_list()[3]
 		size = str(int(input_shape[0]/(k1*k2*k3))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3))) + 'x' + str(depth)
-		layers.append({'layer': conv4, 'name': 'conv4', 'size': size})
+		layers.append({'name': 'conv6', 'size': size})
+
+		# Pool 4
+		k4 = 2
+		pool4 = self.maxpool2d(conv6, k=k4, name='pool4')
+		size = str(int(input_shape[0]/(k1*k2*k3*k4))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3*k4))) + 'x' + str(depth)
+		layers.append({'name': 'pool4', 'size': size})
+
+		# Conv7
+		conv7 = self.conv2d(pool4, weights['wc7'], biases['bc7'], name='conv7')
+		depth = weights['wc7'].get_shape().as_list()[3]
+		size = str(int(input_shape[0]/(k1*k2*k3*k4))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3*k4))) + 'x' + str(depth)
+		layers.append({'name': 'conv7', 'size': size})
+
+		# Conv8
+		conv8 = self.conv2d(conv7, weights['wc8'], biases['bc8'], name='conv8')
+		depth = weights['wc8'].get_shape().as_list()[3]
+		size = str(int(input_shape[0]/(k1*k2*k3*k4))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3*k4))) + 'x' + str(depth)
+		layers.append({'name': 'conv8', 'size': size})
 
 		# Flatten
-		k4 = input_shape[0]/(k1*k2*k3)
-		flatten = self.maxpool2d(conv4, k=k4, name='pool4')
+		k5 = input_shape[0]/(k1*k2*k3*k4)
+		flatten = self.maxpool2d(conv8, k=k5, name='flatten')
 		size = '1x1x' + str(depth)
-		layers.append({'layer': flatten, 'name': 'flatten', 'size': size})
+		layers.append({'name': 'flatten', 'size': size})
 
 		# Fully connected 1
 		fc1 = tf.reshape(flatten, [-1, weights['wd1'].get_shape().as_list()[0]])
 		fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
 		fc1 = tf.nn.relu(fc1)
 		size = str(weights['wd1'].get_shape().as_list()[1])
-		layers.append({'layer': fc1, 'name': 'fc1', 'size': size})
+		layers.append({'name': 'fc1', 'size': size})
 
 		# Fully connected 2
 		fc2 = tf.reshape(fc1, [-1, weights['wd2'].get_shape().as_list()[0]])
@@ -176,9 +199,7 @@ class CNN:
 		return batches
 
 	def checkpoint_variables(self, sess):
-		print(str([n.name for n in tf.global_variables()]))
 		for var in tf.global_variables():
-			print('Initializing ' + var.name)
 			self.variables[var] = sess.run(var)
 
 	def initialize_session(self):
@@ -242,22 +263,44 @@ class CNN:
 
 			self.checkpoint_variables(sess)
 			
+	def write_layers(self, path):
+		f = open(path, 'w')
+
+		for layer in self.layers:
+			f.write(layer['name'] + ', ' + layer['size'] + '\n')
+
+		f.close()
+
+	def restore_layers(self, path):
+		f = open(path, 'r')
+
+		for line in f.readlines():
+			name, size = line.split(', ')
+			self.layers.append({'name': name, 'size': size})
+
+		f.close()
 
 	def save(self, path):
+		model_path = os.path.join(path, 'model.ckpt')
+		layers_path = os.path.join(path, 'layers.txt')
 		with self.initialize_session() as sess:
 			saver = tf.train.Saver(tf.global_variables())
-			saver.save(sess, path)
-
+			saver.save(sess, model_path)
+			self.write_layers(layers_path)
+			
 			return True
 
 		return False
 
 	def load(self, path):
-		graph_path = path + '.meta'
+		model_path = os.path.join(path, 'model.ckpt')
+		graph_path = model_path + '.meta'
+		layers_path = os.path.join(path, 'layers.txt')
 		with tf.Session(graph=self.graph) as sess:
 			sess.run(tf.global_variables_initializer())
 			saver = tf.train.import_meta_graph(graph_path)
 			saver.restore(sess, path)
+			self.restore_layers(layers_path)
 
 			self.checkpoint_variables(sess)
 
@@ -266,7 +309,7 @@ class CNN:
 		input_size = height * width * channels
 		X = np.reshape(X, (-1, input_size))
 		batches = self.split_data(X)
-		predictions = []
+		predictions = np.zeros(0)
 
 		with self.initialize_session() as sess:
 			for batch in batches:
@@ -277,6 +320,27 @@ class CNN:
 					predictions = np.concatenate((predictions, batch_preds))
 		
 		return predictions
+
+	def extract_features(self, X, layer_name):
+		if not layer_name in self.layers:
+			print('No layer named ' + layer_name + ' in cnn ' + self.id)
+
+		height, width, channels = self.input_shape
+		input_size = height * width * channels
+		X = np.reshape(X, (-1, input_size))
+		batches = self.split_data(X)
+		features = np.zeros(0)
+
+		with self.initalize_session() as sess:
+			layer = sess.graph.get_tensor_by_name(layer_name)
+			for batch in batches:
+				batch_preds = sess.run(layer, feed_dict={self.x: batch['x']})
+				if len(features) == 0:
+					features = batch_preds
+				else:
+					features = np.concatenate((predictions, batch_preds))
+
+		return features
 
 
 
