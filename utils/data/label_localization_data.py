@@ -23,7 +23,6 @@ def extract_matrix(feature, indices, grid_size):
 
 def label_localization_data(features, labels, grid_size=(3, 3)):
 	indices = np.asarray([-1, 0, 1])
-	import random
 
 	num, height, width, depth = features.shape
 	grid_height, grid_width = grid_size
