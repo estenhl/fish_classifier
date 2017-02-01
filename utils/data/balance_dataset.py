@@ -4,7 +4,7 @@ from collections import Counter
 def balance_dataset(X, y, classes):
 	counts = Counter([np.argmax(val) for val in y])
 	print('Counts: ' + str(counts))
-	min_count = min(counts)
+	min_count = min([counts[x] for x in counts])
 	print('Min count: ' + str(min_count))
 
 	balanced_X = []
