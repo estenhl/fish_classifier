@@ -5,7 +5,7 @@ from nets import SingleLayerCNN
 from nets import DeepCNN
 from utils.data import split_data
 from utils.data import shuffle_data
-from utils.data import balance_data
+from utils.data import balance_dataset
 from utils.data import parse_localization_data
 from utils.data import label_localization_data
 from train_recognition_model import train_recognition_model
