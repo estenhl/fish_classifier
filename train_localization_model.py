@@ -22,9 +22,10 @@ def train_localization_model(recognition_cnn=None, image_shape=DEFAULT_IMAGE_SHA
 	features = recognition_cnn.extract_features(images, LAYER_NAME)
 	X, y = label_localization_data(features, Y)
 	X, y = shuffle_data(X, y)
-	from collections import Counter
-	counts = Counter(y)
-	print(counts)
+	counts = [0, 0]
+	for i in y:
+		counts[np.argmax(i)] = counts[np.argmax(i)] + 1
+	print(str(counts))
 	train_X, train_y, val_X, val_y = split_data(X, y)
 
 	cnn = SingleLayerCNN('Fishes_localization', (3, 3, 512), 2)
