@@ -24,7 +24,7 @@ def train_localization_model(recognition_cnn=None, image_shape=DEFAULT_IMAGE_SHA
 	features = recognition_cnn.extract_features(images, LAYER_NAME)
 	X, y = label_localization_data(features, Y)
 	X, y = shuffle_data(X, y)
-	X, y = balance_data(X, y)
+	X, y = balance_dataset(X, y)
 	counts = [0, 0]
 	for i in y:
 		counts[np.argmax(i)] = counts[np.argmax(i)] + 1
