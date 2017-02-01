@@ -32,7 +32,7 @@ def train_localization_model(recognition_cnn=None, image_shape=DEFAULT_IMAGE_SHA
 	train_X, train_y, val_X, val_y = split_data(X, y)
 
 	cnn = SingleLayerCNN('Fishes_localization', (3, 3, 512), 2)
-	cnn.fit(train_X, train_y, val_X, val_y, epochs=10)
+	cnn.fit(train_X, train_y, val_X, val_y, epochs=100)
 
 if __name__ == '__main__':
 	train_localization_model(verbose=True)
