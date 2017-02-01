@@ -36,6 +36,6 @@ def label_localization_data(features, labels, grid_size=(3, 3)):
 				vertical_indices = i + indices
 				horizontal_indices = j + indices
 				X[(cnt * height * width) + (i * height) + j] = extract_matrix(feature, list(itertools.product(vertical_indices, horizontal_indices)), grid_size)
-				y[(cnt * height * width) + (i * height) + j] = random.randint(0, 1)#labels[cnt][height][width].astype(int)
+				y[(cnt * height * width) + (i * height) + j] = labels[cnt][height][width].astype(int)
 
 	return X, onehot(y)
