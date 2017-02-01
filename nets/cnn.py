@@ -203,7 +203,7 @@ class CNN(ABC):
 					if len(features) == 0:
 						features = batch_preds
 					else:
-						features = np.concatenate((predictions, batch_preds))
+						features = np.concatenate((features, batch_preds))
 			else:
 				print('Graph ' + self.id + ' has no layer ' + layer_name)
 
