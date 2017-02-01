@@ -322,8 +322,7 @@ class DeepCNN:
 		return predictions
 
 	def extract_features(self, X, layer_name):
-		if not layer_name in self.layers:
-			print('No layer named ' + layer_name + ' in cnn ' + self.id)
+		print('Extracting features from ' + layer_name)
 
 		height, width, channels = self.input_shape
 		input_size = height * width * channels
@@ -331,14 +330,17 @@ class DeepCNN:
 		batches = self.split_data(X)
 		features = np.zeros(0)
 
-		with self.initalize_session() as sess:
+		with self.initialize_session() as sess:
 			layer = sess.graph.get_tensor_by_name(layer_name)
-			for batch in batches:
-				batch_preds = sess.run(layer, feed_dict={self.x: batch['x']})
-				if len(features) == 0:
-					features = batch_preds
-				else:
-					features = np.concatenate((predictions, batch_preds))
+			if layer is not None:
+				for batch in batches:
+					batch_preds = sess.run(layer, feed_dict={self.x: batch['x']})
+					if len(features) == 0:
+						features = batch_preds
+					else:
+						features = np.concatenate((predictions, batch_preds))
+			else:
+				print('Graph ' + self.id + ' has no layer ' + layer_name)
 
 		return features
 

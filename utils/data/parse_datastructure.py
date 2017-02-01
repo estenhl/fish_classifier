@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+from .parse_image import parse_image
 
 def onehot(arr):
 	shape = (len(arr), np.amax(arr) + 1)
@@ -9,7 +10,7 @@ def onehot(arr):
 
 	return onehot
 
-def parse_datastructure(folder, image_shape, max=None, verbose=False):
+def parse_datastructure(folder, image_shape, limit=None, verbose=False):
 	print('Reading data from ' + folder)
 
 	X = []
@@ -26,19 +27,17 @@ def parse_datastructure(folder, image_shape, max=None, verbose=False):
 		labels.append(label)
 		counts.append(0)
 		i = 0
+
 		for filename in os.listdir(src):
-			if filename == '.DS_Store':
+			if not filename.endswith('.jpg'):
 				continue
 
-			img = cv2.imread(os.path.join(src, filename))
-			img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-			height, width, _ = image_shape
-			img = cv2.resize(img, (height, width))
+			img = parse_image(os.path.join(src, filename), image_shape)
 			X.append(img)
 			y.append(label_id)
 			counts[label_id] = counts[label_id] + 1
 			i += 1
-			if max is not None and i == max:
+			if limit is not None and i == limit:
 				break
 		if verbose:
 			print('Read ' + str(i) + ' images from ' + src)
