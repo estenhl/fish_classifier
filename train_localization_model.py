@@ -21,7 +21,7 @@ def train_localization_model(recognition_cnn=None, image_shape=DEFAULT_IMAGE_SHA
 		recognition_cnn = train_recognition_model(verbose=verbose)
 
 	gridsize, images, Y = parse_localization_data(SRC_FOLDER, DATA_FILE, image_shape, verbose=verbose)
-	features = recognition_cnn.extract_features(images, LAYER_NAME)
+	features = np.flipud(recognition_cnn.extract_features(images, LAYER_NAME))
 	X, y = label_localization_data(features, Y)
 	X, y = shuffle_data(X, y)
 	X, y = balance_dataset(X, y, 2)
