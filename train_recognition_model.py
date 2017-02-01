@@ -15,7 +15,7 @@ def train_recognition_model(image_shape=DEFAULT_IMAGE_SHAPE, verbose=False):
 	if verbose:
 		print('Training recognition model')
 
-	X, y, labels, ratios = parse_datastructure(SRC_FOLDER, image_shape, verbose=verbose)
+	X, y, labels, ratios = parse_datastructure(SRC_FOLDER, image_shape, limit=1452, verbose=verbose)
 	X, y = shuffle_data(X, y)
 	train_X, train_y, val_X, val_y = split_data(X, y)
 
