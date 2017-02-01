@@ -1,4 +1,5 @@
 import os
+import numpy as np
 from project import *
 from nets import SingleLayerCNN
 from nets import DeepCNN
