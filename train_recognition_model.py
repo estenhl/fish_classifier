@@ -21,7 +21,7 @@ def train_recognition_model(image_shape=DEFAULT_IMAGE_SHAPE, verbose=False):
 
 	height, width, channels = image_shape
 	cnn = DeepCNN('Fishes', (height, width, channels), 2, class_weights=(1 - ratios))
-	cnn.fit(train_X, train_y, val_X, val_y, epochs=1)
+	cnn.fit(train_X, train_y, val_X, val_y, epochs=10)
 
 	if not os.path.isdir(OUTPUT_MODEL_FOLDER):
 		os.mkdir(OUTPUT_MODEL_FOLDER)
