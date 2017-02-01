@@ -1,14 +1,8 @@
 import os
 import cv2
 import numpy as np
+from .onehot import onehot
 from .parse_image import parse_image
-
-def onehot(arr):
-	shape = (len(arr), np.amax(arr) + 1)
-	onehot = np.zeros(shape)
-	onehot[np.arange(shape[0]), arr] = 1
-
-	return onehot
 
 def parse_datastructure(folder, image_shape, limit=None, verbose=False):
 	print('Reading data from ' + folder)
@@ -44,11 +38,10 @@ def parse_datastructure(folder, image_shape, limit=None, verbose=False):
 
 	X = np.asarray(X)
 	y = np.array(y)
-	y = onehot(y)
 	counts = np.asarray(counts)
 	ratios = counts / np.sum(counts)
 
 	if verbose:
 		print('Read ' + str(len(X)) + ' total images')
 		
-	return X, y, labels, ratios
+	return X, onehot(y), labels, ratios

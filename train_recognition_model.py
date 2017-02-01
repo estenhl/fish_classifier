@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 from project import *
-from nets.deep_cnn import DeepCNN
+from nets import DeepCNN
 from utils.data import split_data
 from utils.data import shuffle_data
 from utils.data import parse_datastructure
@@ -15,13 +15,13 @@ def train_recognition_model(image_shape=DEFAULT_IMAGE_SHAPE, verbose=False):
 	if verbose:
 		print('Training recognition model')
 
-	X, y, labels, ratios = parse_datastructure(SRC_FOLDER, image_shape, limit=50, verbose=verbose)
+	X, y, labels, ratios = parse_datastructure(SRC_FOLDER, image_shape, verbose=verbose)
 	X, y = shuffle_data(X, y)
 	train_X, train_y, val_X, val_y = split_data(X, y)
 
 	height, width, channels = image_shape
 	cnn = DeepCNN('Fishes', (height, width, channels), 2, class_weights=(1 - ratios))
-	cnn.fit(train_X, train_y, val_X, val_y, epochs=1)
+	cnn.fit(train_X, train_y, val_X, val_y, epochs=15)
 
 	if not os.path.isdir(OUTPUT_MODEL_FOLDER):
 		os.mkdir(OUTPUT_MODEL_FOLDER)

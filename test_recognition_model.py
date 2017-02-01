@@ -1,6 +1,6 @@
 import os
 from project import *
-from nets.deep_cnn import DeepCNN
+from nets import DeepCNN
 from utils.data import parse_datastructure
 from utils.eval import validate_prediction
 

@@ -1,6 +1,9 @@
 import os
 from project import *
-from nets.deep_cnn import DeepCNN
+from nets import SingleLayerCNN
+from nets import DeepCNN
+from utils.data import split_data
+from utils.data import shuffle_data
 from utils.data import parse_localization_data
 from utils.data import label_localization_data
 from train_recognition_model import train_recognition_model
@@ -15,11 +18,14 @@ def train_localization_model(recognition_cnn=None, image_shape=DEFAULT_IMAGE_SHA
 	if recognition_cnn is None:
 		recognition_cnn = train_recognition_model(verbose=verbose)
 
-	gridsize, images, Y = parse_localization_data(SRC_FOLDER, DATA_FILE, image_shape, limit=50, verbose=verbose)
+	gridsize, images, Y = parse_localization_data(SRC_FOLDER, DATA_FILE, image_shape, verbose=verbose)
 	features = recognition_cnn.extract_features(images, LAYER_NAME)
 	X, y = label_localization_data(features, Y)
-	print('X.shape: ' + str(X.shape))
-	print('y.shape: ' + str(y.shape))
+	X, y = shuffle_data(X, y)
+	train_X, train_y, val_X, val_y = split_data(X, y)
+
+	cnn = SingleLayerCNN('Fishes_localization', (3, 3, 512), 2)
+	cnn.fit(X, y, X, y, epochs=50)
 
 if __name__ == '__main__':
 	train_localization_model(verbose=True)

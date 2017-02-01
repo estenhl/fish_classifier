@@ -1,6 +1,7 @@
 import os
 import itertools
 import numpy as np
+from .onehot import onehot
 
 def is_valid_index(features, index):
 	y, x = index
@@ -22,11 +23,12 @@ def extract_matrix(feature, indices, grid_size):
 
 def label_localization_data(features, labels, grid_size=(3, 3)):
 	indices = np.asarray([-1, 0, 1])
+	import random
 
 	num, height, width, depth = features.shape
 	grid_height, grid_width = grid_size
 	X = np.zeros((len(features) * height * width, grid_height, grid_width, depth))
-	y = np.zeros(len(features) * height * width)
+	y = np.zeros(len(features) * height * width, dtype=int)
 	for cnt in range(0, num):
 		feature = features[cnt]
 		for i in range(0, len(feature)):
@@ -34,6 +36,6 @@ def label_localization_data(features, labels, grid_size=(3, 3)):
 				vertical_indices = i + indices
 				horizontal_indices = j + indices
 				X[(cnt * height * width) + (i * height) + j] = extract_matrix(feature, list(itertools.product(vertical_indices, horizontal_indices)), grid_size)
-				y[(cnt * height * width) + (i * height) + j] = labels[cnt][height][width]
+				y[(cnt * height * width) + (i * height) + j] = random.randint(0, 1)#labels[cnt][height][width].astype(int)
 
-	return X, y
+	return X, onehot(y)
