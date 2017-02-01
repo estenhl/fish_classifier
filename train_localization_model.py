@@ -5,6 +5,7 @@ from nets import SingleLayerCNN
 from nets import DeepCNN
 from utils.data import split_data
 from utils.data import shuffle_data
+from utils.data import balance_data
 from utils.data import parse_localization_data
 from utils.data import label_localization_data
 from train_recognition_model import train_recognition_model
@@ -23,6 +24,7 @@ def train_localization_model(recognition_cnn=None, image_shape=DEFAULT_IMAGE_SHA
 	features = recognition_cnn.extract_features(images, LAYER_NAME)
 	X, y = label_localization_data(features, Y)
 	X, y = shuffle_data(X, y)
+	X, y = balance_data(X, y)
 	counts = [0, 0]
 	for i in y:
 		counts[np.argmax(i)] = counts[np.argmax(i)] + 1
