@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from project import *
-from nets import SingleLayerCNN
+from nets import SingleLayerNN
 from nets import DeepCNN
 from utils.data import split_data
 from utils.data import shuffle_data
