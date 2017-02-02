@@ -4,7 +4,7 @@ class SingleLayerNN:
 
 	def weights(self):
 		return {
-			'hidden': tf.Variable(tf.random_normal([self.input_shape, int(self.input_shape * (2/3)) + self.classes]), name='hidden_weight')
+			'hidden': tf.Variable(tf.random_normal([self.input_shape, int(self.input_shape * (2/3)) + self.classes]), name='hidden_weight'),
 			'out': tf.Variable(tf.random_normal([int(self.input_shape * (2/3)) + self.classes, self.classes]), name='out_weight')
 		}
 
