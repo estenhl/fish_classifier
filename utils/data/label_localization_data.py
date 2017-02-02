@@ -4,6 +4,6 @@ from .onehot import onehot
 def label_localization_data(features, labels, grid_size=(3, 3)):
 	num, height, width, depth = features.shape
 	X = np.reshape(features, (num * height * width, depth))
-	y = labels.flatten()
+	y = labels.flatten().astype(int)
 
 	return X, onehot(y)
