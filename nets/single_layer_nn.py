@@ -1,3 +1,6 @@
+import tensorflow as tf
+from .nn import NN
+
 class SingleLayerNN(NN):
 	def __init__(self, id, input_shape, classes, class_weights=None):
 		super().__init__(self, id, input_shape, classes, class_weights=None)
