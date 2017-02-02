@@ -1,8 +1,5 @@
-import os
-import random
-import numpy as np
 import tensorflow as tf
-from abc import ABC, abstractmethod
+from .nn import NN
 
 class CNN(NN):
 	def __init__(self, id, input_shape, classes, class_weights=None):
