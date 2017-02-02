@@ -3,10 +3,10 @@ from .cnn import CNN
 
 class DeepCNN(CNN):
 	def __init__(self, id, input_shape, classes, class_weights=None):
-		super().__init__(id, input_shape, classes, class_weights)
+		super().__init__(id, input_shape, classes, class_weights=class_weights)
 
-	def weights(self, input_shape):
-		height, width, channels = input_shape
+	def weights(self):
+		height, width, channels = self.input_shape
 		return {
 			'wc1': tf.Variable(tf.random_normal([5, 5, channels, 32]), name='wc1'),
 			'wc2': tf.Variable(tf.random_normal([5, 5, 32, 64]), name='wc2'),
@@ -21,7 +21,7 @@ class DeepCNN(CNN):
 			'out': tf.Variable(tf.random_normal([512, self.classes]), name='out_weight')
 		}
 
-	def biases(self, input_shape):
+	def biases(self):
 		return {
 			'bc1': tf.Variable(tf.random_normal([32]), name='bc1'),
 			'bc2': tf.Variable(tf.random_normal([64]), name='bc2'),
@@ -36,7 +36,7 @@ class DeepCNN(CNN):
 			'out': tf.Variable(tf.random_normal([self.classes]), name='out_bias')
 		}
 
-	def conv_net(self, x, input_shape, weights, biases):
+	def net(self, x, input_shape, weights, biases):
 		height, width, channels = input_shape
 		x = tf.reshape(x, shape=[-1, height, width, channels])
 		layers = []
@@ -132,12 +132,12 @@ class DeepCNN(CNN):
 		fc2 = tf.nn.relu(fc2)
 		fc2 = tf.nn.dropout(fc2, 1, name='dropout')
 		size = str(weights['wd2'].get_shape().as_list()[1])
-		layers.append({'layer': fc1, 'name': 'fc2', 'size': size})
+		layers.append({'name': 'fc2', 'size': size})
 
 		# Output
 		out = tf.add(tf.matmul(fc2, weights['out']), biases['out'], name='out')
 		size = str(weights['out'].get_shape().as_list()[1])
-		layers.append({'layer': out, 'name': 'out', 'size': size})
+		layers.append({'name': 'out', 'size': size})
 
 		return out, layers
 
