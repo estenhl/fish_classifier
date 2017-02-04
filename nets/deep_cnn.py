@@ -102,7 +102,7 @@ class DeepCNN(CNN):
 		#layers.append({'name': 'pool4', 'size': size})
 
 		# Conv7
-		conv7 = self.conv2d(conv5, weights['wc7'], biases['bc7'], name='conv7')
+		conv7 = self.conv2d(conv6, weights['wc7'], biases['bc7'], name='conv7')
 		depth = weights['wc7'].get_shape().as_list()[3]
 		size = str(int(input_shape[0]/(k1*k2*k3*k4))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3*k4))) + 'x' + str(depth)
 		layers.append({'name': 'conv7', 'size': size})
