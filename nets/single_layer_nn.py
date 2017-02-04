@@ -22,9 +22,9 @@ class SingleLayerNN(NN):
 		self.x = tf.placeholder(tf.float32, [None, input_shape[0]], name='x_placeholder')
 		self.y = tf.placeholder(tf.float32, [None, self.classes], name='y_placeholder')
 
-		hidden = tf.reshape(fc, [-1, weights['hidden']].get_shape().as_list()[0])
-		hidden = tf.add(tf.matmul(fc, weights['hidden']), biases['hidden'])
-		hidden = tf.nn.relu(fc)
+		hidden = tf.reshape(self.x, [-1, weights['hidden']].get_shape().as_list()[0])
+		hidden = tf.add(tf.matmul(hidden, weights['hidden']), biases['hidden'])
+		hidden = tf.nn.relu(hidden)
 		size = str(weights['hidden'].get_shape().as_list()[1])
 		layers.append({'name': 'hidden', 'size': size})
 
