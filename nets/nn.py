@@ -18,7 +18,7 @@ class NN(ABC):
 		if len(input_shape) == 3:
 			height, width, channels = input_shape
 			input_size = height * width * channels
-		elif len(input_shape) == 1:
+		else:
 			input_size = input_shape
 
 		self.graph = tf.Graph()
