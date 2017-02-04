@@ -139,7 +139,7 @@ class DeepCNN(CNN):
 		size = str(weights['out'].get_shape().as_list()[1])
 		layers.append({'name': 'out', 'size': size})
 
-		print('Layers: ' + str(self.layers))
+		print('Layers: ' + str(layers))
 		return out, layers
 
 
