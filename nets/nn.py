@@ -103,7 +103,7 @@ class NN(ABC):
 		return loss, acc
 
 	def fit(self, train_X, train_y, val_X, val_y, epochs=DEFAULT_EPOCHS):
-		if len(input_shape) == 3:
+		if len(self.input_shape) == 3:
 			height, width, channels = self.input_shape
 			input_size = height * width * channels
 		else:
