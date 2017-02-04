@@ -138,8 +138,7 @@ class DeepCNN(CNN):
 		out = tf.add(tf.matmul(fc2, weights['out']), biases['out'], name='out')
 		size = str(weights['out'].get_shape().as_list()[1])
 		layers.append({'name': 'out', 'size': size})
-
-		print('Layers: ' + str(layers))
+		
 		return out, layers
 
 
