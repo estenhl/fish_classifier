@@ -15,8 +15,11 @@ class NN(ABC):
 		self.classes = classes
 		self.variables = {}
 
-		height, width, channels = input_shape
-		input_size = height * width * channels
+		if len(input_shape == 3):
+			height, width, channels = input_shape
+			input_size = height * width * channels
+		elif len(input_shape == 1):
+			input_size = input_shape
 
 		self.graph = tf.Graph()
 		with tf.Session(graph=self.graph) as sess:
