@@ -22,6 +22,9 @@ class SingleLayerNN(NN):
 		self.x = tf.placeholder(tf.float32, [None, input_shape[0]], name='x_placeholder')
 		self.y = tf.placeholder(tf.float32, [None, self.classes], name='y_placeholder')
 
+		print('Input shape: ' + str(input_size))
+		print('Weights: ' + str(weights))
+
 		hidden = tf.reshape(self.x, [-1, weights['hidden'].get_shape().as_list()[0]])
 		hidden = tf.add(tf.matmul(self.x, weights['hidden']), biases['hidden'])
 		hidden = tf.nn.relu(hidden)

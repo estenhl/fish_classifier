@@ -68,13 +68,13 @@ class DeepCNN(CNN):
 		# Conv3
 		conv3 = self.conv2d(pool2, weights['wc3'], biases['bc3'], name='conv3')
 		depth = weights['wc3'].get_shape().as_list()[3]
-		size = str(int(input_shape[0]/k1*k2)) + 'x' +  str(int(input_shape[1]/k1*k2)) + 'x' + str(depth)
+		size = str(int(input_shape[0]/(k1*k2))) + 'x' +  str(int(input_shape[1]/(k1*k2))) + 'x' + str(depth)
 		layers.append({'name': 'conv3', 'size': size})
 
 		# Conv4
 		conv4 = self.conv2d(pool2, weights['wc4'], biases['bc4'], name='conv4')
 		depth = weights['wc4'].get_shape().as_list()[3]
-		size = str(int(input_shape[0]/k1*k2)) + 'x' +  str(int(input_shape[1]/k1*k2)) + 'x' + str(depth)
+		size = str(int(input_shape[0]/(k1*k2))) + 'x' +  str(int(input_shape[1]/(k1*k2))) + 'x' + str(depth)
 		layers.append({'name': 'conv4', 'size': size})
 
 		# Pool3
