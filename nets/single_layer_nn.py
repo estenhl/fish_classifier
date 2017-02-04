@@ -14,7 +14,7 @@ class SingleLayerNN(NN):
 
 	def biases(self):
 		return {
-			'hidden': tf.Variable(tf.random_normal([self.input_size]), name='hidden_bias'),
+			'hidden': tf.Variable(tf.random_normal([int(self.input_size * (2/3)) + self.classes]), name='hidden_bias'),
 			'out': tf.Variable(tf.random_normal([self.classes]), name='out_bias')
 		}
 
