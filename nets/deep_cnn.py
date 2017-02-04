@@ -104,17 +104,17 @@ class DeepCNN(CNN):
 		# Conv7
 		conv7 = self.conv2d(conv6, weights['wc7'], biases['bc7'], name='conv7')
 		depth = weights['wc7'].get_shape().as_list()[3]
-		size = str(int(input_shape[0]/(k1*k2*k3*k4))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3*k4))) + 'x' + str(depth)
+		size = str(int(input_shape[0]/(k1*k2*k3))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3))) + 'x' + str(depth)
 		layers.append({'name': 'conv7', 'size': size})
 
 		# Conv8
 		conv8 = self.conv2d(conv7, weights['wc8'], biases['bc8'], name='conv8')
 		depth = weights['wc8'].get_shape().as_list()[3]
-		size = str(int(input_shape[0]/(k1*k2*k3*k4))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3*k4))) + 'x' + str(depth)
+		size = str(int(input_shape[0]/(k1*k2*k3))) + 'x' +  str(int(input_shape[1]/(k1*k2*k3))) + 'x' + str(depth)
 		layers.append({'name': 'conv8', 'size': size})
 
 		# Flatten
-		k5 = input_shape[0]/(k1*k2*k3*k4)
+		k5 = input_shape[0]/(k1*k2*k3)
 		flatten = self.maxpool2d(conv8, k=k5, name='flatten')
 		size = '1x1x' + str(depth)
 		layers.append({'name': 'flatten', 'size': size})
