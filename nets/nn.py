@@ -103,9 +103,14 @@ class NN(ABC):
 		return loss, acc
 
 	def fit(self, train_X, train_y, val_X, val_y, epochs=DEFAULT_EPOCHS):
-		height, width, channels = self.input_shape
-		train_X = np.reshape(train_X, [-1, height * width * channels])
-		val_X = np.reshape(val_X, [-1, height * width * channels])
+		if len(input_shape) == 3:
+			height, width, channels = self.input_shape
+			input_size = height * width * channels
+		else:
+			input_size = self.input_shape[0]
+
+		train_X = np.reshape(train_X, [-1, input_size])
+		val_X = np.reshape(val_X, [-1, input_size])
 
 		batches = self.split_data(train_X, train_y)
 		val_batches = self.split_data(val_X, val_y)
