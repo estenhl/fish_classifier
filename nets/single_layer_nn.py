@@ -2,8 +2,8 @@ import tensorflow as tf
 from .nn import NN
 
 class SingleLayerNN(NN):
-	def __init__(self, id, input_shape, classes, class_weights=None):
-		super().__init__(id, [input_shape], classes)
+	def __init__(self, id, input_size, classes, class_weights=None):
+		super().__init__(id, [input_size], classes)
 
 	def weights(self):
 		return {

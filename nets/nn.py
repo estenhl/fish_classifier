@@ -19,7 +19,7 @@ class NN(ABC):
 			height, width, channels = input_shape
 			input_size = height * width * channels
 		else:
-			input_size = input_shape
+			input_size = input_shape[0]
 
 		self.graph = tf.Graph()
 		with tf.Session(graph=self.graph) as sess:
