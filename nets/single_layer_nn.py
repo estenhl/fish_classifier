@@ -3,22 +3,23 @@ from .nn import NN
 
 class SingleLayerNN(NN):
 	def __init__(self, id, input_size, classes, class_weights=None):
+		self.input_size = input_size
 		super().__init__(id, [input_size], classes)
 
 	def weights(self):
 		return {
-			'hidden': tf.Variable(tf.random_normal([self.input_shape, int(self.input_shape * (2/3)) + self.classes]), name='hidden_weight'),
-			'out': tf.Variable(tf.random_normal([int(self.input_shape * (2/3)) + self.classes, self.classes]), name='out_weight')
+			'hidden': tf.Variable(tf.random_normal([self.input_size, int(self.input_size * (2/3)) + self.classes]), name='hidden_weight'),
+			'out': tf.Variable(tf.random_normal([int(self.input_size * (2/3)) + self.classes, self.classes]), name='out_weight')
 		}
 
 	def biases(self):
 		return {
-			'hidden': tf.Variable(tf.random_normal([self.input_shape]), name='hidden_bias'),
+			'hidden': tf.Variable(tf.random_normal([self.input_size]), name='hidden_bias'),
 			'out': tf.Variable(tf.random_normal([self.classes]), name='out_bias')
 		}
 
 	def net(self, x, input_shape, weights, biases):
-		self.x = tf.placeholder(tf.float32, [None, input_shape], name='x_placeholder')
+		self.x = tf.placeholder(tf.float32, [None, input_size], name='x_placeholder')
 		self.y = tf.placeholder(tf.float32, [None, classes], name='y_placeholder')
 
 		hidden = tf.reshape(fc, [-1, weights['hidden']].get_shape().as_list()[0])
