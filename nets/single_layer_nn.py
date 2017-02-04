@@ -29,6 +29,6 @@ class SingleLayerNN(NN):
 		size = str(weights['hidden'].get_shape().as_list()[1])
 		layers.append({'name': 'hidden', 'size': size})
 
-		out = tf.add(tf.matmul(fc2, weights['fc' + len(layers) - 1]), biases['fc' + len(layers) - 1], name='out')
+		out = tf.add(tf.matmul(hidden, weights['out']), biases['out'], name='out')
 
 		return out, layers
